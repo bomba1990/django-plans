@@ -21,7 +21,7 @@ from plans.forms import CreateOrderForm, BillingInfoForm, FakePaymentsForm
 from plans.models import Quota, Invoice
 from plans.signals import order_started
 from plans.validators import plan_validation
-
+from . import conf
 
 class AccountActivationView(LoginRequired, TemplateView):
     template_name = 'plans/account_activation.html'
@@ -182,7 +182,7 @@ class CreateOrderView(LoginRequired, CreateView):
         """
         order = Order(pk=-1)
         order.amount = amount
-        order.currency = self.get_currency()
+        order.currency = conf.get_currency()
         country = getattr(billing_info, 'country', None)
         if not country is None:
             country = country.code
@@ -245,12 +245,6 @@ class CreateOrderView(LoginRequired, CreateView):
         except BillingInfo.DoesNotExist:
             return None
 
-    def get_currency(self):
-        CURRENCY = getattr(settings, 'PLANS_CURRENCY', '')
-        if len(CURRENCY) != 3:
-            raise ImproperlyConfigured('PLANS_CURRENCY should be configured as 3-letter currency code.')
-        return CURRENCY
-
     def get_price(self):
         return self.plan_pricing.price
 
@@ -262,7 +256,7 @@ class CreateOrderView(LoginRequired, CreateView):
         order = self.recalculate(self.plan_pricing.price, context['billing_info'])
         order.plan = self.plan_pricing.plan
         order.pricing = self.plan_pricing.pricing
-        order.currency = self.get_currency()
+        order.currency = conf.get_currency()
         order.user = self.request.user
         context['object'] = order
 

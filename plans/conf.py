@@ -49,3 +49,10 @@ def get_customer_model():
         )
 
     return customer_model
+
+
+def get_currency():
+    CURRENCY = getattr(settings, 'PLANS_CURRENCY', '')
+    if len(CURRENCY) != 3:
+        raise ImproperlyConfigured('PLANS_CURRENCY should be configured as 3-letter currency code.')
+    return CURRENCY
