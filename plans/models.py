@@ -196,6 +196,25 @@ class CustomerPlan(models.Model):
         _('expire'), default=None, blank=True, null=True, db_index=True)
     active = models.BooleanField(_('active'), default=True, db_index=True)
 
+
+    cancel_at_period_end = models.BooleanField(
+        default=False,
+        help_text="If the subscription has been canceled "
+                  "``cancel_at_period_end`` on the subscription will be true. "
+                  "You can use this attribute to determine whether a subscription that has a "
+                  "status of active is scheduled to be canceled at the end of the "
+                  "current period.",
+    )
+    canceled_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="If the subscription has been canceled, the date of that "
+                  "cancellation. If the subscription was canceled with ``cancel_at_period_end``, "
+                  "canceled_at will still reflect the date of the initial cancellation request, "
+                  "not the end of the subscription period when the subscription is automatically "
+                  "moved to a canceled state.",
+    )
+
     class Meta:
         verbose_name = _("Customer plan")
         verbose_name_plural = _("Customers plans")
@@ -512,6 +531,8 @@ class Order(models.Model):
     currency = models.CharField(_('currency'), max_length=3, default='EUR')
     status = models.IntegerField(
         _('status'), choices=STATUS, default=STATUS.NEW)
+
+    charge = models.OneToOneField("djstripe.Charge", on_delete=models.CASCADE)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.created is None:
