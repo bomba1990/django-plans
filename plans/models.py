@@ -1,17 +1,15 @@
 from __future__ import unicode_literals
 
-import re
 import logging
-import vatnumber
-
-from decimal import Decimal
+import re
 from datetime import date, timedelta
+from decimal import Decimal
 
+import vatnumber
+from cities_light.models import Country
+from django.conf import settings
 from django.db import models
 from django.db.models import Max
-
-from django.conf import settings
-from django.contrib.auth import get_user_model
 
 try:
     from django.contrib.sites.models import Site
@@ -25,7 +23,6 @@ from django.utils import translation
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _, pgettext_lazy
 
-from django_countries.fields import CountryField
 from ordered_model.models import OrderedModel
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 
@@ -142,7 +139,7 @@ class BillingInfo(models.Model):
     street = models.CharField(_('street'), max_length=200)
     zipcode = models.CharField(_('zip code'), max_length=200)
     city = models.CharField(_('city'), max_length=200)
-    country = CountryField(_("country"))
+    country = models.ForeignKey(Country, models.PROTECT, blank=True, null=True)
     shipping_name = models.CharField(
         _('name (shipping)'), max_length=200, blank=True, help_text=_('optional'))
     shipping_street = models.CharField(
@@ -680,7 +677,7 @@ class Invoice(models.Model):
     buyer_zipcode = models.CharField(
         max_length=200, verbose_name=_("Zip code"))
     buyer_city = models.CharField(max_length=200, verbose_name=_("City"))
-    buyer_country = CountryField(verbose_name=_("Country"), default='PL')
+    buyer_country = models.ForeignKey(Country, models.PROTECT, blank=True, null=True, related_name="invoice_buyer_country")
     buyer_tax_number = models.CharField(
         max_length=200, blank=True, verbose_name=_("TAX/VAT number"))
     shipping_name = models.CharField(max_length=200, verbose_name=_("Name"))
@@ -689,14 +686,14 @@ class Invoice(models.Model):
     shipping_zipcode = models.CharField(
         max_length=200, verbose_name=_("Zip code"))
     shipping_city = models.CharField(max_length=200, verbose_name=_("City"))
-    shipping_country = CountryField(verbose_name=_("Country"), default='PL')
+    shipping_country = models.ForeignKey(Country, models.PROTECT, blank=True, null=True, related_name="invoice_shipping_country")
     require_shipment = models.BooleanField(default=False, db_index=True)
     issuer_name = models.CharField(max_length=200, verbose_name=_("Name"))
     issuer_street = models.CharField(max_length=200, verbose_name=_("Street"))
     issuer_zipcode = models.CharField(
         max_length=200, verbose_name=_("Zip code"))
     issuer_city = models.CharField(max_length=200, verbose_name=_("City"))
-    issuer_country = CountryField(verbose_name=_("Country"), default='PL')
+    issuer_country = models.ForeignKey(Country, models.PROTECT, blank=True, null=True)
     issuer_tax_number = models.CharField(
         max_length=200, blank=True, verbose_name=_("TAX/VAT number"))
 
