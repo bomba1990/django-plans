@@ -77,6 +77,7 @@ class Plan(OrderedModel):
         verbose_name=_('customized'),
         on_delete=models.CASCADE
     )
+    role = models.ForeignKey("accounts.CompanyRole", null=True, blank=True, on_delete=models.SET_NULL)
     quotas = models.ManyToManyField('Quota', through='PlanQuota')
     url = models.URLField(max_length=200, blank=True, help_text=_(
         'Optional link to page with more information (for clickable pricing table headers)'))
