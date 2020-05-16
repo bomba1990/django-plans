@@ -91,7 +91,7 @@ class BillingInfoAdmin(UserLinkMixin, admin.ModelAdmin):
     list_display_links = list_display
     list_select_related = True
     readonly_fields = ('user_link',)
-    exclude = ('customer',)
+
 
 
 def make_order_completed(modeladmin, request, queryset):

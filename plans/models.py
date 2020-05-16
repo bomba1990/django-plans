@@ -58,7 +58,6 @@ class Plan(OrderedModel):
         help_text=_('Both "Unknown" and "No" means that the plan is not default'),
         default=None,
         db_index=True,
-        unique=True,
     )
     available = models.BooleanField(
         _('available'), default=False, db_index=True,
@@ -74,7 +73,7 @@ class Plan(OrderedModel):
         verbose_name=_('customized'),
         on_delete=models.CASCADE
     )
-    role = models.ForeignKey("accounts.CompanyRole", null=True, blank=True, on_delete=models.SET_NULL)
+    role = models.ForeignKey("accounts.CompanyRole", on_delete=models.CASCADE)
     quotas = models.ManyToManyField('Quota', through='PlanQuota')
     url = models.URLField(max_length=200, blank=True, help_text=_(
         'Optional link to page with more information (for clickable pricing table headers)'))
@@ -83,6 +82,7 @@ class Plan(OrderedModel):
         ordering = ('order',)
         verbose_name = _("Plan")
         verbose_name_plural = _("Plans")
+        unique_together = [["role", "default"], ]
 
     def save(self, *args, **kwargs):
         if not self.created:
@@ -91,9 +91,9 @@ class Plan(OrderedModel):
         super(Plan, self).save(*args, **kwargs)
 
     @classmethod
-    def get_default_plan(cls):
+    def get_default_plan(cls, role):
         try:
-            return_value = cls.objects.get(default=True)
+            return_value = cls.objects.get(default=True, role=role)
         except cls.DoesNotExist:
             return_value = None
         return return_value
@@ -103,7 +103,7 @@ class Plan(OrderedModel):
         """ Get current plan for customer. If customerplan is expired, get default plan """
         if not customer or customer.is_anonymous or not hasattr(customer,
                                                                 'customerplan') or customer.customerplan.is_expired():
-            default_plan = Plan.get_default_plan()
+            default_plan = Plan.get_default_plan(role=customer.role)
             if default_plan is None or not default_plan.is_free():
                 raise ValidationError(_('User plan has expired'))
             return default_plan
@@ -374,7 +374,7 @@ class CustomerPlan(models.Model):
 
     @classmethod
     def create_for_customer(cls, customer):
-        default_plan = Plan.get_default_plan()
+        default_plan = Plan.get_default_plan(role=customer.role)
         if default_plan is not None:
             return CustomerPlan.objects.create(
                 customer=customer,
